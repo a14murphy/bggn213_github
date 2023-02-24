@@ -1,0 +1,306 @@
+---
+title: "Class 07: Machine Learning 1"
+format: pdf
+---
+
+## Clustering and principal component analysis (PCA)
+
+#clustering with K-means
+
+made-up data cluster with known results
+
+```{r}
+hist(rnorm(300000, mean = -3))
+```
+vecotr with two groupings in it:
+```{r}
+tmp <- c(rnorm(30, -3), rnorm(30, +3))
+tmp
+
+x <- data.frame(x=tmp, y=rev(tmp))
+x
+```
+
+```{r}
+plot(x)
+```
+
+```{r}
+km <- kmeans(x, 2)
+
+km
+```
+
+its important to also be able to get the important results back in a way we can do things with
+
+> Q. How do we get the cluster size?
+
+```{r}
+km$size
+```
+
+> Q. How do we get the cluster center?
+
+```{r}
+km$centers
+```
+
+> Q. How do we get the main result, the cluster assignment vector?
+
+```{r}
+km$cluster
+```
+
+> Q. Can we make a summary figure showing the clustering result colored by clustering assignment and the cluster centers in a different color?
+
+```{r}
+plot(x, col = "red" )
+```
+
+```{r}
+plot(x, col = km$cluster)  #this works bc you can number by color!
+```
+```{r}
+library(ggplot2)
+```
+
+
+```{r}
+ggplot(x) +
+  aes(x, y) +
+  geom_point(color = km$cluster)
+```
+
+```{r}
+# make up a color vector
+
+mycols <- rep("grey", 60)
+mycols
+
+plot(x, col = mycols)
+```
+
+
+lets highlight points 10, 12 and 20 in red
+
+```{r}
+mycols[c(10,12,20)] <- "red"
+```
+
+```{r}
+plot(x, col = mycols, pch = 18)
+```
+
+play with the cluster numbers and kmeans
+
+kmeans "imposes" a 3 cluster structure onto the data
+```{r}
+km <- kmeans(x, 3)
+km
+
+plot(x, col = km$cluster)
+
+```
+
+keep track of the *total withinss* score to know how good the clustering is
+```{r}
+km$tot.withinss
+```
+
+trying out different numbers of K from 1 to 7. We can write a `for`loop to do this for us, and store the `$tot.withinss` each time
+
+```{r}
+
+tot_ss <- NULL
+
+k <- 1:7
+
+for(i in k) {
+  #calculates kmean of x for k (the number of clusters) from 1:7 and saving the $tot.withinss part of the kmeans return to tot_ss
+  tot_ss <- c(tot_ss, kmeans(x, centers = i)$tot.withinss)
+}
+```
+
+```{r}
+totss <-  NULL
+
+k <- 1:7
+
+for (i in k) {
+  
+}
+```
+
+
+```{r}
+plot(tot_ss, type = "o")
+```
+
+# Hierarchical clustering
+
+we cant just give the `hclust()` fucntion of input data `x` like we did for `kmeans()`. We need to first calculate a *distance matrix* with the `dist()` function which will calculate the euclidean distance by default.
+
+```{r}
+d <- dist(x)
+
+hc <- hclust(d)
+hc
+```
+
+the default print out isnt very helpful, but the plot method is
+```{r}
+plot(hc)
+```
+
+hierarchical clusterinig is bottom up. Cross bar heights represent how close each point/cluster is to another. The taller the cross bar height, the further away the points/clusters are from each other.
+
+```{r}
+plot(hc)
+abline(h=10, col = "red", lty=2)
+```
+
+
+to get the important cluster membership vector out of hclust object, use `cutree()`
+```{r}
+cutree(hc, h = 10) # cuts tree at height 10 and returns cluster assignement vector
+```
+
+you can also set a `k=` argument to `cutree()`
+```{r}
+groups <- cutree(hc, k = 3) # cuts tree to yield 3 groups
+```
+
+```{r}
+plot(x, col = groups)
+```
+
+```{r}
+ggplot(x) +
+  aes(x,y) +
+  geom_point(color = groups)
+```
+
+# Principal component analysis (PCA)
+
+The main base R function to do PCA is called `prcomp()`
+
+(dimensions = number of things being measured = number of columns; not all dimensions of a dataset are equally important to understand the dataset)
+
+PCA projects the features onto the principal components (PC's) which reduces the dimensionality while only losing a little bit of data
+
+First principal component (PC1) follows a "best fit" line through the data points. Covers most of the spread (max variance)
+
+The second principal component (PC2) covers the rest.
+
+PC1 and PC2 become the new low dimensional axis/surfaces closest to the data.
+
+PCA reduces dimensionality, helps visualize multidimensional data, choose most useful vars (features), identify groupings & identify outliers.
+
+#PCA UK Food Data
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+x
+```
+
+> Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+
+```{r}
+dim(x)
+```
+
+(dangerous code below for rownames)
+```{r}
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x)
+```
+better to just read it again with the `row.names=1` argument
+```{r}
+x <- read.csv(url, row.names = 1)
+x
+```
+
+> Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+
+the `row.names` approach is better because it saves time and you dont run the risk of accidentally deleting rows.
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+> Q3: Changing what optional argument in the above barplot() function results in the following plot?
+
+```{r}
+barplot(as.matrix(x), beside = F, col=rainbow(nrow(x)))
+```
+changing beside=T to beside=F gives you this plot
+
+> Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+
+if a given point is on the diagonal for a given plot it means that it correlates to another country. it is the possible pairwise scatter
+
+> Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+
+the main difference between N ireland and the other countries is the blue point is higher in ireland than the rest of the countries, while orange point is higher in the other countries than ireland
+
+PCA
+
+pca needs transpose of the food data
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+```
+
+PC1 captures 67% of the variance, PC2 has 
+
+cumulative proportion adds the component proportions of variance PC1 + PC2 which covers 96%
+
+```{r}
+attributes(pca)
+```
+
+```{r}
+pca$x
+```
+shows what the data looks like along the new PCA axes
+
+> Q7. Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
+
+PC1 vs PC2 plot or "score" plot, "PCA" plot
+```{r}
+mycols <- c("orange", "red", "blue", "green")
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500), col = mycols, pch = 16, cex = 2)
+
+abline(h=0)
+abline
+#text(pca$x[,1], pca$x[,2], colnames(x))
+```
+```{r}
+pc <- as.data.frame(pca$x)
+
+ggplot(pc) +
+  aes(PC1,PC2) +
+  geom_point(color=mycols, size = 5)
+```
+
+Lets look at how the original variables contribute to our new axis of max variance, aka PC's
+
+```{r}
+pca$rotation
+```
+
+```{r}
+loadings <- as.data.frame(pca$rotation)
+
+ggplot(loadings) +
+  aes(PC1, rownames(loadings)) +
+  geom_col()
+```
+positive contributions are things ireland has more of in the scatter plot
+
+negative things are things the other countries have more of in the scatter

@@ -1,0 +1,116 @@
+---
+title: "Class 06 Functions"
+author: "Ashlyn Murphy"
+format: html
+---
+# Working with Functions
+
+```{r}
+
+add <- function(x, y=1) {
+  #sum x + y
+  x + y
+}
+
+```
+
+```{r}
+# y=1 is the default y value if a y value is not specified
+add(10, 44)
+# can use vectorized x values such that y is added to each x value in the vector
+add(c(10, 15, 77, 3), y=4)
+```
+
+write functions to simplify & reduce code when you find yourself doing the same thing 3 or more times!
+
+consider OG code below calculating minimums in a dataframe df
+
+```{r}
+
+df$a <- (df$a - min(df$a)) / (max(df$a) - min(df$a))
+
+df$b <- (df$a - min(df$b)) / (max(df$b) - min(df$b))
+
+df$c <- (df$c - min(df$c)) / (max(df$c) - min(df$c))
+
+df$d <- (df$d - min(df$d)) / (max(df$d) - min(df$d))
+
+```
+
+simplify to work with a generic vector named "x"
+
+```{r}
+
+x <- (x - min(x)) / (max(x) - min(x))
+
+```
+
+min(x) is duplicated even in this simple code above so lets simplify by saving it as a temp var
+
+```{r}
+
+xmin <- min(x)
+
+x <- (x - xmin) / (max(x) - xmin)
+
+```
+
+there is a function called `range()` that returns a vector of the max and min of a numeric vector, so lets use that to optimize
+
+```{r}
+rng <- range(x)
+
+# first [1] element is the min, second [2] element is the max
+x <- (x - rng[1]) / (rng[2] - rng[1])
+```
+
+once you get the function to basically where you want it, its time to test it on a small example where you know what the answer should be
+
+make sure the written function has a name, arguments & a body
+
+```{r}
+rescale <- function(x) {
+  rng <- range(x)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+
+# test on rescale(1:10)
+
+rescale(1:10)
+```
+
+What if there is a missing data point (NA)? 
+
+```{r}
+rescale( c(1, NA, 4, 10, 20))
+```
+
+Lets figure out why this doesn't work (doesn't rescale values we do have, doesn't tell you a value is missing, etc)
+
+```{r}
+# lets look at the components of the function and if they give what we want on their own
+
+range( c(1, NA, 4, 10, 20))
+
+```
+So the problem is coming from the range function since its trying to divide by NA (check out help pages!)
+
+Found that `range()` contains an argument called na.rm which is a logical, indicating if NA's should be omitted (na.rm = FALSE means NA is omitted)
+
+```{r}
+range( c(1, NA, 4, 10, 20), na.rm = TRUE)
+```
+adding this gives the min and max vector!
+
+edit prev function & try again!
+```{r}
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+```
+
+```{r}
+rescale01( c(1, NA, 4, 10, 20))
+```
+it works! Yipee!
