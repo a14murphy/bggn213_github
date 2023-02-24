@@ -1,2 +1,2 @@
-# bggn213_github
+# BGGN213
 class work from bggn213
