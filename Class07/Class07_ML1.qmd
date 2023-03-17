@@ -1,6 +1,6 @@
 ---
 title: "Class 07: Machine Learning 1"
-format: pdf
+format: gfm
 ---
 
 ## Clustering and principal component analysis (PCA)
