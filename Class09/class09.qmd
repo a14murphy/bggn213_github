@@ -1,0 +1,185 @@
+---
+title: "Class09: Structural Bioinfo"
+author: Ashlyn Murphy
+format: pdf
+---
+
+```{r}
+pdb_stats <- read.csv("pdb_stats.csv", row.names = 1)
+```
+
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+```{r}
+knitr::kable(pdb_stats)
+```
+
+
+```{r}
+# commas cause issues in numbers!
+
+n.xray <-  sum(as.numeric(gsub(",", "", pdb_stats$X.ray)))
+
+n.em <- sum(as.numeric(gsub(",", "", pdb_stats$EM)))
+
+n.total <- sum(as.numeric(gsub(",", "", pdb_stats$Total)))
+
+n.total
+n.xray/n.total
+```
+
+```{r}
+x <- pdb_stats$Total[1]
+n.num <- function(x) {
+  sum(as.numeric(gsub(",", "", x)))
+}
+
+n.num
+```
+
+
+> Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+prot.total <- sum(as.numeric(gsub(",", "", pdb_stats$Total[1])))
+prot.total
+
+prot.total/n.total
+
+```
+
+
+> Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+
+Many
+
+> Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+
+Hydrogens are too small to be seen on the resolution of the protein structure 
+
+> Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have
+
+Water 308
+
+> Q6: Generate and save a figure clearly showing the two distinct chains of HIV-protease along with the ligand. You might also consider showing the catalytic residues ASP 25 in each chain and the critical water (we recommend “Ball & Stick” for these side-chains). Add this figure to your Quarto document.
+
+make sure to move image into folder you're working in first!
+
+![HIV-1 protease with an important drug molecule bound (PDB code 1HSG)](1HSG.png)
+
+
+# Bioinfo
+
+using `bio3d` for structural bioinformatics
+
+```{r}
+library(bio3d)
+```
+
+```{r}
+p <- read.pdb("1hsg")
+p
+```
+
+> Q7: How many amino acid residues are there in this pdb object?
+
+198
+
+
+```{r}
+head(p$atom)
+```
+
+resid for the first atom
+
+convert from 3 to 1 letter aa code use `aa321`
+
+```{r}
+aa321(p$atom[1,5])
+
+```
+
+# Normal mode analysis (NMA)
+
+```{r}
+adk <- read.pdb("6s36")
+
+adk
+```
+
+NMA 
+```{r}
+m <- nma(adk)
+plot(m)
+```
+
+make a traj file
+```{r}
+mktrj(m, file="adk_m7.pdb")
+```
+
+
+
+# Comparative structure analysis (CSA)
+
+```{r}
+#BiocManager::install("msa")
+```
+
+```{r}
+#install.packages("devtools")
+```
+
+
+```{r}
+library(bio3d)
+aa <- get.seq("1ake_A")
+aa
+```
+
+
+```{r}
+#b <- blast.pdb(aa)
+```
+
+```{r}
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+```
+
+```{r}
+#hits <- plot(b)
+#head(hits$pdb.id)
+```
+
+```{r}
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+align and superimpose structures
+
+```{r}
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+
+```
+ Lets look at the output alignment
+ 
+```{r}
+pdbs
+```
+ PCA
+ 
+```{r}
+pc.xray <- pca(pdbs)
+plot(pc.xray)
+```
+
+trajectory visualization along PC1
+
+```{r}
+pc1 <- mktrj(pc.xray, pc=1, file="pc_1.pdb")
+```
+
+
+
